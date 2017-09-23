@@ -4,8 +4,11 @@ const request = require('request')
 const app = express()
 
 const token = "EAAMHYU4szGEBAAVX8RHJ4tV0o77FBziT0bp13rzXykhLPohsgheH3d7nLmc6ZBoh7savEtfQJ0kcVsqQG6qjlEKSzkknVgRyFfMxmiX5IYUaSfMZAOD76MeKmQ37tUbvBbnufgmWauEsO2q0Jb1AIcxZBGEZA5RgiLNcj2879zttZB543uAnx"
-app.set('port', (process.env.PORT || 5000))
+const crypto = require('crypto')
+const AppSecret = 'hello_world';
 
+app.set('port', (process.env.PORT || 5000))
+app.use(bodyParser.json({verify: verifyRequestSignature}))
 app.use(bodyParser.urlencoded({extended: false}))
 
 app.use(bodyParser.json())
@@ -52,7 +55,24 @@ function sendTextMessage(sender, text) {
 	    }
     })
 }
+function verifyRequestSignature(req, res, buf){
+  let signature = req.headers["x-hub-signature"];
+  
+  if(!signature){
+    console.error('You dont have signature')
+  } else {
+    let element = signature.split('=')
+    let method = element[0]
+    let signatureHash = element[1]
+    let expectedHash = crypto.createHmac('sha1', AppSecret).update(buf).digest('hex')
 
+    console.log('signatureHash = ', signatureHash)
+    console.log('expectedHash = ', expectedHash)
+    if(signatureHash != expectedHash){
+      console.error('signature invalid, send message to email or save as log')
+    }
+  }
+}
 app.listen(app.get('port'), function() {
 	console.log('running on port', app.get('port'))
 })
