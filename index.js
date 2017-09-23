@@ -53,24 +53,58 @@ app.post('/webhook/', function (req, res) {
 	}
   })
 
+// function sendTextMessage(sender, text) {
+//     let messageData = { text:text }
+//     request({
+// 	    url: 'https://graph.facebook.com/v2.6/me/messages',
+// 	    qs: {access_token:token},
+// 	    method: 'POST',
+// 		json: {
+// 		    recipient: {id:sender},
+// 			message: messageData,
+// 		}
+// 	}, function(error, response, body) {
+// 		if (error) {
+// 		    console.log('Error sending messages: ', error)
+// 		} else if (response.body.error) {
+// 		    console.log('Error: ', response.body.error)
+// 	    }
+//     })
+// }
+
 function sendTextMessage(sender, text) {
-    let messageData = { text:text }
-    request({
-	    url: 'https://graph.facebook.com/v2.6/me/messages',
-	    qs: {access_token:token},
-	    method: 'POST',
-		json: {
-		    recipient: {id:sender},
-			message: messageData,
+	let url = `https://graph.facebook.com/v2.6/${sender}?fields=first_name,last_name,profile_pic&access_token=${token}`;
+	
+	request(url, function (error, response, body) {
+	  if (!error && response.statusCode == 200) {
+		let parseData = JSON.parse(body);
+		let messageData = {
+		  text: `Hi ${parseData.first_name} ${parseData.last_name}, you send message : ${text}`
 		}
-	}, function(error, response, body) {
-		if (error) {
-		    console.log('Error sending messages: ', error)
-		} else if (response.body.error) {
-		    console.log('Error: ', response.body.error)
-	    }
-    })
-}
+		request({
+		  url: 'https://graph.facebook.com/v2.10/me/messages',
+		  qs: {
+			access_token: token
+		  },
+		  method: 'POST',
+		  json: {
+			recipient: {
+			  id: sender
+			},
+			message: messageData,
+		  }
+		}, function (error, response, body) {
+		  if (error) {
+			console.log('Error sending messages: ', error)
+		  } else if (response.body.error) {
+			console.log('Error: ', response.body.error)
+		  }
+		})
+	  }
+	})
+  }
+
+  
 function verifyRequestSignature(req, res, buf){
   let signature = req.headers["x-hub-signature"];
   
